@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Mafia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-zinc-950 text-white min-h-screen font-sans">
+    <div class="max-w-4xl mx-auto p-5 space-y-6">
+      <!-- الشاشة الرئيسية -->
+      <section id="screen-home" class="space-y-6">
+        <div class="text-center py-10 space-y-4">
+          <h1 class="text-5xl font-black">Mafia</h1>
+          <p class="text-zinc-400">لعبة مافيا وتحقيق تعتمد على قصص AI</p>
+        </div>
+
+        <div
+          class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-6"
+        >
+          <h2 class="text-2xl font-black">إضافة اللاعبين</h2>
+          <div class="flex gap-3">
+            <input
+              id="playerInput"
+              type="text"
+              placeholder="اسم اللاعب"
+              class="flex-1 rounded-2xl bg-zinc-950 border border-zinc-700 p-4"
+            />
+            <button
+              onclick="addPlayer()"
+              class="px-6 rounded-2xl bg-white text-black font-black"
+            >
+              ➕ إضافة
+            </button>
+          </div>
+          <div id="playersList" class="space-y-2"></div>
+
+          <!-- <div class="space-y-3">
+            <label class="block text-zinc-300">عدد المافيا</label>
+            <input
+              id="mafiaCount"
+              type="number"
+              min="1"
+              value="2"
+              class="w-full rounded-2xl bg-zinc-950 border border-zinc-700 p-4"
+            />
+          </div> -->
+
+          <button
+            onclick="generatePrompt()"
+            class="w-full py-4 rounded-2xl bg-red-700 hover:bg-red-600 text-xl font-black"
+          >
+            ⚡ إنشاء
+          </button>
+          <div id="promptSection" class="hidden space-y-4">
+            <button
+              onclick="copyGeneratedPrompt()"
+              class="w-full py-4 rounded-2xl bg-white text-black font-black"
+            >
+              📋 نسخ البرومبت
+            </button>
+            <button
+              onclick="showJsonSection()"
+              class="w-full py-4 rounded-2xl bg-zinc-800 font-black"
+            >
+              ▶ التالي
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="jsonSection"
+          class="hidden bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-5"
+        >
+          <h2 class="text-2xl font-bold">ألصق ملف JSON</h2>
+          <textarea
+            id="jsonInput"
+            placeholder="ألصق ملف JSON هنا..."
+            class="w-full min-h-[350px] rounded-2xl bg-zinc-950 border border-zinc-700 p-4"
+          ></textarea>
+          <button
+            onclick="startGame()"
+            class="w-full py-4 rounded-2xl bg-red-700 hover:bg-red-600 text-xl font-black"
+          >
+            🚀 ابدأ اللعبة
+          </button>
+        </div>
+      </section>
+
+      <!-- شاشة المقدمة -->
+      <section
+        id="screen-intro"
+        class="hidden bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-5"
+      >
+        <h2 id="gameTitle" class="text-4xl font-black"></h2>
+        <p id="gameIntro" class="text-zinc-300 leading-8"></p>
+        <button
+          onclick="showCaseFile()"
+          class="w-full py-4 rounded-2xl bg-red-700 font-black"
+        >
+          📂 افتح ملف القضية
+        </button>
+      </section>
+
+      <!-- ملف القضية -->
+      <section
+        id="screen-case"
+        class="hidden bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-5"
+      >
+        <h2 class="text-3xl font-black">📜 ملف القضية</h2>
+        <div id="caseFile" class="text-zinc-300 leading-8"></div>
+        <button
+          onclick="startCards()"
+          class="w-full py-4 rounded-2xl bg-red-700 font-black"
+        >
+          ▶ التالي
+        </button>
+      </section>
+
+      <!-- توزيع الكروت -->
+      <section
+        id="screen-cards"
+        class="hidden bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-6 text-center"
+      >
+        <h2 class="text-3xl font-black">🃏 توزيع الكروت</h2>
+        <div
+          class="bg-zinc-950 border border-zinc-700 rounded-3xl p-8 space-y-5"
+        >
+          <p class="text-zinc-400">اعطي الهاتف إلى</p>
+          <h3 id="playerName" class="text-5xl font-black"></h3>
+          <div
+            id="visibleCard"
+            class="bg-zinc-900 rounded-2xl border border-zinc-700 p-5 text-right space-y-3"
+          ></div>
+          <button
+            onclick="flipCard()"
+            class="w-full py-4 rounded-2xl bg-white text-black font-black"
+          >
+            🔄 اقلب الكارت
+          </button>
+          <div
+            id="secretCard"
+            class="hidden bg-red-950 border border-red-800 rounded-2xl p-5 text-right space-y-3"
+          ></div>
+          <button
+            onclick="nextPlayer()"
+            class="w-full py-4 rounded-2xl bg-zinc-800 font-black mt-4"
+          >
+            ▶ التالي
+          </button>
+        </div>
+      </section>
+
+      <!-- التحقيق -->
+      <section
+        id="screen-investigation"
+        class="hidden bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-6 text-center"
+      >
+        <h2 class="text-4xl font-black">🕵️ التحقيق بدأ</h2>
+        <div class="bg-zinc-950 border border-zinc-700 rounded-3xl p-10">
+          <div id="timer" class="text-7xl font-black text-red-500">05:00</div>
+        </div>
+        <button
+          onclick="showClue()"
+          class="w-full py-4 rounded-2xl bg-red-700 font-black"
+        >
+          🔎 كشف الدليل
+        </button>
+      </section>
+
+      <!-- الأدلة -->
+      <section
+        id="screen-clue"
+        class="hidden bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-6"
+      >
+        <h2 id="clueTitle" class="text-3xl font-black"></h2>
+        <div
+          id="clueText"
+          class="bg-zinc-950 border border-zinc-700 rounded-3xl p-6 leading-8 text-zinc-300"
+        ></div>
+        <button
+          onclick="startVoting()"
+          class="w-full py-4 rounded-2xl bg-white text-black font-black"
+        >
+          🗳️ بدء التصويت
+        </button>
+      </section>
+
+      <!-- التصويت -->
+      <section
+        id="screen-voting"
+        class="hidden bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-6 text-center"
+      >
+        <h2 class="text-4xl font-black">🗳️ التصويت</h2>
+        <div
+          id="votingRoundLabel"
+          class="hidden text-yellow-400 font-bold text-lg"
+        ></div>
+        <div
+          class="bg-zinc-950 border border-zinc-700 rounded-3xl p-8 space-y-5"
+        >
+          <p class="text-zinc-400">اعطي الهاتف إلى</p>
+          <h3 id="votePlayerName" class="text-5xl font-black"></h3>
+          <div id="voteButtons" class="grid grid-cols-2 gap-4"></div>
+        </div>
+      </section>
+
+      <!-- دفاع التعادل -->
+      <section
+        id="screen-defense"
+        class="hidden bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-6 text-center"
+      >
+        <h2 class="text-4xl font-black">⚖️ تعادل في التصويت!</h2>
+        <p class="text-zinc-400 text-lg">لكل لاعب دقيقة للدفاع عن نفسه</p>
+        <div
+          class="bg-zinc-950 border border-zinc-700 rounded-3xl p-8 space-y-5"
+        >
+          <p class="text-zinc-400">دور</p>
+          <h3 id="defensePlayerName" class="text-5xl font-black"></h3>
+          <div class="bg-zinc-900 rounded-3xl p-8">
+            <div id="defenseTimer" class="text-7xl font-black text-yellow-400">
+              01:00
+            </div>
+            <p class="text-zinc-500 mt-2">دقيقة للدفاع</p>
+          </div>
+          <button
+            onclick="nextDefense()"
+            class="w-full py-4 rounded-2xl bg-zinc-800 font-black"
+          >
+            ▶ اللاعب التالي
+          </button>
+        </div>
+      </section>
+
+      <!-- النتيجة -->
+      <section
+        id="screen-result"
+        class="hidden bg-red-950 border border-red-800 rounded-3xl p-8 text-center space-y-5"
+      >
+        <h2 class="text-4xl font-black">⛓️ نتيجة التصويت</h2>
+        <h3 id="eliminatedName" class="text-5xl font-black"></h3>
+        <div id="eliminatedRole" class="text-3xl font-black"></div>
+        <button
+          onclick="continueGame()"
+          class="w-full py-4 rounded-2xl bg-white text-black font-black"
+        >
+          ▶ متابعة التحقيق
+        </button>
+      </section>
+
+      <!-- نهاية اللعبة -->
+      <section
+        id="screen-gameover"
+        class="hidden rounded-3xl p-8 text-center space-y-6"
+      >
+        <div id="gameoverEmoji" class="text-8xl"></div>
+        <h2 id="gameoverTitle" class="text-5xl font-black"></h2>
+        <p id="gameoverText" class="text-zinc-300 text-xl leading-8"></p>
+        <div
+          id="gameoverRoles"
+          class="bg-zinc-900 rounded-2xl p-5 text-right space-y-3 text-sm"
+        ></div>
+        <button
+          onclick="location.reload()"
+          class="w-full py-4 rounded-2xl bg-white text-black font-black text-xl"
+        >
+          🔄 لعبة جديدة
+        </button>
+      </section>
+    </div>
+
+    <script>
+      let gameData = null;
+      let players = [];
+      let generatedPrompt = "";
+      let currentPlayer = 0;
+      let currentClue = 0;
+      let votingPlayer = 0;
+      let votes = {};
+      let alivePlayers = [];
+      let timerInterval = null;
+
+      // --- التعادل ---
+      let tiedPlayers = []; // اللاعبان المتعادلان
+      let defenseIndex = 0; // من يدافع الآن
+      let defenseInterval = null;
+      let isTieBreaker = false; // هل نحن في جولة إعادة؟
+
+      // === دوال localStorage ===
+      function savePlayersToLocalStorage() {
+        localStorage.setItem("aiMafiaPlayers", JSON.stringify(players));
+      }
+
+      function loadPlayersFromLocalStorage() {
+        const stored = localStorage.getItem("aiMafiaPlayers");
+        if (stored) {
+          try {
+            players = JSON.parse(stored);
+            renderPlayers();
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+
+      function hideAllScreens() {
+        document
+          .querySelectorAll("section")
+          .forEach((s) => s.classList.add("hidden"));
+      }
+
+      function addPlayer() {
+        const input = document.getElementById("playerInput");
+        const name = input.value.trim();
+        if (!name) return;
+        players.push(name);
+        input.value = "";
+        renderPlayers();
+        savePlayersToLocalStorage(); // حفظ بعد الإضافة
+      }
+
+      function renderPlayers() {
+        const container = document.getElementById("playersList");
+        container.innerHTML = "";
+        players.forEach((player, index) => {
+          const div = document.createElement("div");
+          div.className =
+            "bg-zinc-950 border border-zinc-700 rounded-2xl p-4 flex justify-between items-center";
+          div.innerHTML = `<span>${player}</span><button onclick="removePlayer(${index})" class="text-red-500 font-bold">✖</button>`;
+          container.appendChild(div);
+        });
+      }
+
+      function removePlayer(index) {
+        players.splice(index, 1);
+        renderPlayers();
+        savePlayersToLocalStorage(); // حفظ بعد الإزالة
+      }
+
+      function generatePrompt() {
+        const mafiaCount = document.getElementById("mafiaCount").value;
+        if (players.length < 3) {
+          alert("أضف 3 لاعبين على الأقل");
+          return;
+        }
+
+        generatedPrompt = `أنت الآن "قائد لعبة المافيا - Game Master".
+
+مهمتك إنشاء لعبة مافيا وتحقيق كاملة بصيغة JSON لاستخدامها داخل لعبة موبايل.
+
+اللاعبين:
+${players.join(" ، ")}
+
+عدد المافيا (اتبع القاعدة التالية تلقائياً):
+- لو عدد اللاعبين من 4 إلى 6 = مافيا واحد
+- لو من 7 إلى 10 = مافيا 2
+- لو من 11 إلى 15 = مافيا 3
+
+قواعد اللعبة الأساسية:
+
+1- اختر ثيم مختلف للقضية (فندق، قطار، جزيرة، مستشفى، قصر، محطة فضاء).
+
+2- أنشئ جريمة رئيسية (قتل / سرقة / خيانة / اختفاء).
+
+3- أنشئ ملف قضية سينمائي باللهجة المصرية.
+
+4- لكل لاعب أنشئ:
+- realName
+- characterName
+- outfit
+- visibleInfo
+- mood
+- secret
+- relation
+- suspiciousNote
+- isMafia
+- mafiaPartner (لو مافيا فقط)
+
+5- المافيا يجب أن يعرفوا بعضهم البعض فقط.
+
+6- أنشئ 4 أدلة تدريجية:
+- الدليل الأول: غامض جداً ولا يحدد مشتبه
+- الدليل الثاني: تضييق بسيط لكن بدون تحديد شخص واضح
+- الدليل الثالث: أقرب للحقائق وقد يربط 2-3 أشخاص
+- الدليل الرابع: ممكن يكون دليل شبه قطعي لكن ليس شرطاً
+
+7- كل دليل يحتوي:
+- title
+- text
+
+8- نظام الفوز والخسارة:
+- يفوز الأبرياء إذا تم القبض على كل المافيا
+- تفوز المافيا إذا أصبح عدد الأبرياء مساوي لعدد المافيا
+
+9- نظام التصويت:
+- إذا حدث تعادل في التصويت بين لاعبين:
+  * يتم إعادة التصويت بينهما فقط
+  * يحصل كل لاعب منهم على دقيقة للدفاع عن نفسه قبل التصويت الثاني
+
+10- كل اللاعبين لديهم أسرار جانبية حتى الأبرياء.
+
+11- اجعل المافيا غير واضحة قدر الإمكان.
+
+صيغة JSON المطلوبة:
+
+{
+  "title": "",
+  "intro": "",
+  "caseFile": "",
+  "players": [
+    {
+      "realName": "",
+      "characterName": "",
+      "outfit": "",
+      "visibleInfo": "",
+      "mood": "",
+      "secret": "",
+      "relation": "",
+      "suspiciousNote": "",
+      "isMafia": false,
+      "mafiaPartner": ""
+    }
+  ],
+  "clues": [
+    {
+      "title": "",
+      "text": ""
+    }
+  ],
+  "endings": {
+    "innocentWin": "",
+    "mafiaWin": ""
+  }
+}
+
+كل النصوص باللهجة المصرية وبأسلوب سينمائي مشوق.`;
+
+        document.getElementById("promptSection").classList.remove("hidden");
+      }
+
+      function copyGeneratedPrompt() {
+        navigator.clipboard.writeText(generatedPrompt);
+        alert("تم نسخ البرومبت");
+      }
+
+      function showJsonSection() {
+        document.getElementById("jsonSection").classList.remove("hidden");
+      }
+
+      function startGame() {
+        try {
+          gameData = JSON.parse(document.getElementById("jsonInput").value);
+          alivePlayers = [...gameData.players];
+          hideAllScreens();
+          document.getElementById("screen-intro").classList.remove("hidden");
+          document.getElementById("gameTitle").innerText = gameData.title;
+          document.getElementById("gameIntro").innerText = gameData.intro;
+        } catch (e) {
+          alert("ملف JSON غير صالح");
+        }
+      }
+
+      function showCaseFile() {
+        hideAllScreens();
+        document.getElementById("screen-case").classList.remove("hidden");
+        document.getElementById("caseFile").innerText = gameData.caseFile;
+      }
+
+      function startCards() {
+        hideAllScreens();
+        currentPlayer = 0;
+        document.getElementById("screen-cards").classList.remove("hidden");
+        loadPlayerCard();
+      }
+
+      function loadPlayerCard() {
+        const player = gameData.players[currentPlayer];
+        document.getElementById("playerName").innerText = player.realName;
+        document.getElementById("visibleCard").innerHTML = `
+          <p><strong>اسم الشخصية:</strong> ${player.characterName}</p>
+          <p><strong>اللبس:</strong> ${player.outfit}</p>
+          <p><strong>معلومة ظاهرة:</strong> ${player.visibleInfo}</p>
+        `;
+        document.getElementById("secretCard").classList.add("hidden");
+      }
+
+      function flipCard() {
+        const player = gameData.players[currentPlayer];
+        document.getElementById("secretCard").classList.remove("hidden");
+        document.getElementById("secretCard").innerHTML = `
+          <p><strong>الحالة المزاجية:</strong> ${player.mood}</p>
+          <p><strong>السر:</strong> ${player.secret}</p>
+          <p><strong>الدور:</strong> ${player.isMafia ? "☠️ مافيا" : "✅ بريء"}</p>
+          ${player.isMafia ? `<p><strong>شريكك:</strong> ${player.mafiaPartner}</p>` : ""}
+        `;
+      }
+
+      function nextPlayer() {
+        currentPlayer++;
+        if (currentPlayer >= gameData.players.length) {
+          hideAllScreens();
+          document
+            .getElementById("screen-investigation")
+            .classList.remove("hidden");
+          startTimer();
+          return;
+        }
+        loadPlayerCard();
+      }
+
+      function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        let time = 300;
+        timerInterval = setInterval(() => {
+          const min = String(Math.floor(time / 60)).padStart(2, "0");
+          const sec = String(time % 60).padStart(2, "0");
+          document.getElementById("timer").innerText = `${min}:${sec}`;
+          time--;
+          if (time < 0) clearInterval(timerInterval);
+        }, 1000);
+      }
+
+      function showClue() {
+        if (timerInterval) clearInterval(timerInterval);
+        hideAllScreens();
+        document.getElementById("screen-clue").classList.remove("hidden");
+        const clue = gameData.clues[currentClue];
+        document.getElementById("clueTitle").innerText = clue.title;
+        document.getElementById("clueText").innerText = clue.text;
+      }
+
+      // =====================
+      // نظام التصويت
+      // =====================
+
+      function startVoting(tieOnly = null) {
+        hideAllScreens();
+        document.getElementById("screen-voting").classList.remove("hidden");
+
+        isTieBreaker = tieOnly !== null;
+        votes = {};
+        votingPlayer = 0;
+
+        if (isTieBreaker) {
+          tiedPlayers = tieOnly;
+          document
+            .getElementById("votingRoundLabel")
+            .classList.remove("hidden");
+          document.getElementById("votingRoundLabel").innerText =
+            "⚡ جولة إعادة التصويت — بين: " +
+            tiedPlayers.map((p) => p.realName).join(" و ");
+        } else {
+          tiedPlayers = [];
+          document.getElementById("votingRoundLabel").classList.add("hidden");
+        }
+
+        loadVotingPlayer();
+      }
+
+      function getVoters() {
+        if (isTieBreaker) {
+          return alivePlayers.filter(
+            (p) => !tiedPlayers.find((t) => t.realName === p.realName),
+          );
+        }
+        return alivePlayers;
+      }
+
+      function getCandidates(voter) {
+        if (isTieBreaker) return tiedPlayers;
+        return alivePlayers.filter((p) => p.realName !== voter.realName);
+      }
+
+      function loadVotingPlayer() {
+        const voters = getVoters();
+
+        if (votingPlayer >= voters.length) {
+          showVotingResult();
+          return;
+        }
+
+        const player = voters[votingPlayer];
+        document.getElementById("votePlayerName").innerText = player.realName;
+
+        const container = document.getElementById("voteButtons");
+        container.innerHTML = "";
+
+        getCandidates(player).forEach((p) => {
+          const btn = document.createElement("button");
+          btn.className =
+            "py-4 rounded-2xl bg-zinc-800 hover:bg-red-700 font-bold";
+          btn.innerText = p.realName;
+          btn.onclick = () => submitVote(p.realName);
+          container.appendChild(btn);
+        });
+      }
+
+      function submitVote(name) {
+        votes[name] = (votes[name] || 0) + 1;
+        votingPlayer++;
+        loadVotingPlayer();
+      }
+
+      function showVotingResult() {
+        let maxVotes = 0;
+        for (const name in votes) {
+          if (votes[name] > maxVotes) maxVotes = votes[name];
+        }
+
+        const topPlayers = Object.keys(votes).filter(
+          (n) => votes[n] === maxVotes,
+        );
+
+        if (topPlayers.length === 2 && !isTieBreaker) {
+          const tied = topPlayers.map((name) =>
+            alivePlayers.find((p) => p.realName === name),
+          );
+          startDefensePhase(tied);
+          return;
+        }
+
+        if (topPlayers.length > 1 && isTieBreaker) {
+          hideAllScreens();
+          document
+            .getElementById("screen-investigation")
+            .classList.remove("hidden");
+          startTimer();
+          return;
+        }
+
+        const eliminated = alivePlayers.find(
+          (p) => p.realName === topPlayers[0],
+        );
+        eliminatePlayer(eliminated);
+      }
+
+      // =====================
+      // مرحلة الدفاع (تعادل)
+      // =====================
+
+      function startDefensePhase(tied) {
+        tiedPlayers = tied;
+        defenseIndex = 0;
+        hideAllScreens();
+        document.getElementById("screen-defense").classList.remove("hidden");
+        loadDefensePlayer();
+      }
+
+      function loadDefensePlayer() {
+        if (defenseIndex >= tiedPlayers.length) {
+          startVoting(tiedPlayers);
+          return;
+        }
+        const player = tiedPlayers[defenseIndex];
+        document.getElementById("defensePlayerName").innerText =
+          player.realName;
+        startDefenseTimer();
+      }
+
+      function startDefenseTimer() {
+        if (defenseInterval) clearInterval(defenseInterval);
+        let time = 60;
+        defenseInterval = setInterval(() => {
+          const sec = String(time).padStart(2, "0");
+          document.getElementById("defenseTimer").innerText = `00:${sec}`;
+          time--;
+          if (time < 0) {
+            clearInterval(defenseInterval);
+            document.getElementById("defenseTimer").innerText =
+              "⏰ انتهى الوقت!";
+          }
+        }, 1000);
+      }
+
+      function nextDefense() {
+        if (defenseInterval) clearInterval(defenseInterval);
+        defenseIndex++;
+        loadDefensePlayer();
+      }
+
+      // =====================
+      // إخراج لاعب وفحص الفوز
+      // =====================
+
+      function eliminatePlayer(player) {
+        hideAllScreens();
+        document.getElementById("screen-result").classList.remove("hidden");
+        document.getElementById("eliminatedName").innerText = player.realName;
+        document.getElementById("eliminatedRole").innerText = player.isMafia
+          ? "☠️ كان من المافيا"
+          : "✅ كان بريئًا";
+        alivePlayers = alivePlayers.filter(
+          (p) => p.realName !== player.realName,
+        );
+      }
+
+      function continueGame() {
+        const aliveMafia = alivePlayers.filter((p) => p.isMafia).length;
+        const aliveInnocent = alivePlayers.filter((p) => !p.isMafia).length;
+
+        if (aliveMafia === 0) {
+          showGameOver("innocent");
+          return;
+        }
+
+        if (aliveMafia >= aliveInnocent) {
+          showGameOver("mafia");
+          return;
+        }
+
+        currentClue++;
+
+        if (currentClue >= gameData.clues.length) {
+          hideAllScreens();
+          document
+            .getElementById("screen-investigation")
+            .classList.remove("hidden");
+          startTimer();
+          return;
+        }
+
+        hideAllScreens();
+        document
+          .getElementById("screen-investigation")
+          .classList.remove("hidden");
+        startTimer();
+      }
+
+      // =====================
+      // شاشة نهاية اللعبة
+      // =====================
+
+      function showGameOver(winner) {
+        hideAllScreens();
+        const screen = document.getElementById("screen-gameover");
+        screen.classList.remove("hidden");
+
+        if (winner === "innocent") {
+          screen.className = screen.className.replace(/bg-\S+/, "bg-green-950");
+          screen.style.border = "1px solid #166534";
+          document.getElementById("gameoverEmoji").innerText = "🏆";
+          document.getElementById("gameoverTitle").innerText =
+            "الأبرياء انتصروا!";
+          document.getElementById("gameoverText").innerText =
+            gameData.endings?.innocentWin || "تم كشف المافيا والعدالة انتصرت!";
+        } else {
+          screen.className = screen.className.replace(/bg-\S+/, "bg-red-950");
+          screen.style.border = "1px solid #991b1b";
+          document.getElementById("gameoverEmoji").innerText = "☠️";
+          document.getElementById("gameoverTitle").innerText = "المافيا فازت!";
+          document.getElementById("gameoverText").innerText =
+            gameData.endings?.mafiaWin || "المافيا سيطرت على الموقف!";
+        }
+
+        const rolesDiv = document.getElementById("gameoverRoles");
+        rolesDiv.innerHTML =
+          "<p class='font-black text-lg mb-3'>🎭 أدوار اللاعبين:</p>";
+        gameData.players.forEach((p) => {
+          const div = document.createElement("div");
+          div.className =
+            "flex justify-between items-center border-b border-zinc-800 py-2";
+          div.innerHTML = `
+            <span class="font-bold">${p.realName} <span class="text-zinc-400 font-normal">(${p.characterName})</span></span>
+            <span class="${p.isMafia ? "text-red-400" : "text-green-400"} font-bold">${p.isMafia ? "☠️ مافيا" : "✅ بريء"}</span>
+          `;
+          rolesDiv.appendChild(div);
+        });
+      }
+
+      // === تحميل الأسماء المخزنة عند بدء الصفحة ===
+      loadPlayersFromLocalStorage();
+    </script>
+  </body>
+</html>
