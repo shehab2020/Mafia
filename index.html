@@ -35,17 +35,7 @@
           </div>
           <div id="playersList" class="space-y-2"></div>
 
-          <div class="space-y-3">
-            <label class="block text-zinc-300">عدد المافيا</label>
-            <input
-              id="mafiaCount"
-              type="number"
-              min="1"
-              value="2"
-              class="w-full rounded-2xl bg-zinc-950 border border-zinc-700 p-4"
-            />
-          </div>
-
+          <!-- تم إخفاء حقل عدد المافيا لأنه يتم تحديده تلقائياً بواسطة الـ AI -->
           <button
             onclick="generatePrompt()"
             class="w-full py-4 rounded-2xl bg-red-700 hover:bg-red-600 text-xl font-black"
@@ -281,10 +271,10 @@
       let timerInterval = null;
 
       // --- التعادل ---
-      let tiedPlayers = []; // اللاعبان المتعادلان
-      let defenseIndex = 0; // من يدافع الآن
+      let tiedPlayers = [];
+      let defenseIndex = 0;
       let defenseInterval = null;
-      let isTieBreaker = false; // هل نحن في جولة إعادة؟
+      let isTieBreaker = false;
 
       // === دوال localStorage ===
       function savePlayersToLocalStorage() {
@@ -316,7 +306,7 @@
         players.push(name);
         input.value = "";
         renderPlayers();
-        savePlayersToLocalStorage(); // حفظ بعد الإضافة
+        savePlayersToLocalStorage();
       }
 
       function renderPlayers() {
@@ -334,16 +324,16 @@
       function removePlayer(index) {
         players.splice(index, 1);
         renderPlayers();
-        savePlayersToLocalStorage(); // حفظ بعد الإزالة
+        savePlayersToLocalStorage();
       }
 
       function generatePrompt() {
-        const mafiaCount = document.getElementById("mafiaCount").value;
         if (players.length < 3) {
           alert("أضف 3 لاعبين على الأقل");
           return;
         }
 
+        // ✅ تم حذف السطر الذي كان يقرأ mafiaCount لأنه غير موجود
         generatedPrompt = `أنت الآن "قائد لعبة المافيا - Game Master".
 
 مهمتك إنشاء لعبة مافيا وتحقيق كاملة بصيغة JSON لاستخدامها داخل لعبة موبايل.
@@ -529,10 +519,6 @@ ${players.join(" ، ")}
         document.getElementById("clueText").innerText = clue.text;
       }
 
-      // =====================
-      // نظام التصويت
-      // =====================
-
       function startVoting(tieOnly = null) {
         hideAllScreens();
         document.getElementById("screen-voting").classList.remove("hidden");
@@ -634,10 +620,6 @@ ${players.join(" ، ")}
         eliminatePlayer(eliminated);
       }
 
-      // =====================
-      // مرحلة الدفاع (تعادل)
-      // =====================
-
       function startDefensePhase(tied) {
         tiedPlayers = tied;
         defenseIndex = 0;
@@ -677,10 +659,6 @@ ${players.join(" ، ")}
         defenseIndex++;
         loadDefensePlayer();
       }
-
-      // =====================
-      // إخراج لاعب وفحص الفوز
-      // =====================
 
       function eliminatePlayer(player) {
         hideAllScreens();
@@ -726,10 +704,6 @@ ${players.join(" ، ")}
         startTimer();
       }
 
-      // =====================
-      // شاشة نهاية اللعبة
-      // =====================
-
       function showGameOver(winner) {
         hideAllScreens();
         const screen = document.getElementById("screen-gameover");
@@ -767,7 +741,6 @@ ${players.join(" ، ")}
         });
       }
 
-      // === تحميل الأسماء المخزنة عند بدء الصفحة ===
       loadPlayersFromLocalStorage();
     </script>
   </body>
